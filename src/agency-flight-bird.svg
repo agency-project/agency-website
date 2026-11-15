@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="633 224 530 483">
+<defs>
+  <linearGradient id="wing" x1="0" x2="1" y1="0" y2="1"><stop stop-color="#18b5ff"/><stop offset="1" stop-color="#0779f2"/></linearGradient>
+  <linearGradient id="navy" x1="0" x2="1" y1="0" y2="1"><stop stop-color="#064b9f"/><stop offset="1" stop-color="#002c6b"/></linearGradient>
+  <linearGradient id="tail" x1="0" x2="1" y1="0" y2="1"><stop stop-color="#0c6ec5"/><stop offset="1" stop-color="#003475"/></linearGradient>
+  <linearGradient id="ice" x1="0" x2="1" y1="0" y2="1"><stop stop-color="#ffffff"/><stop offset=".55" stop-color="#e9f8ff"/><stop offset="1" stop-color="#c7eaff"/></linearGradient>
+  <linearGradient id="head" x1="0" x2="1" y1="0" y2="1"><stop stop-color="#057bf6"/><stop offset="1" stop-color="#0044c7"/></linearGradient>
+</defs>
+<path d="M 635,226 L 943,362 L 960,412 L 1045,369 L 1161,409 L 1073,432 L 1018,554 L 787,705 L 821,644 L 799,527 Z" fill="#020408" />
+<polygon points="663,254 932,370 896,470" fill="url(#wing)" />
+<polygon points="663,267 887,484 803,519" fill="url(#navy)" />
+<polygon points="806,533 890,497 831,649" fill="url(#tail)" />
+<polygon points="941,379 1005,545 842,656 899,494" fill="url(#ice)" />
+<polygon points="965,425 1041,384 1010,534" fill="url(#head)" />
+<polygon points="1054,388 1127,409 1071,421" fill="url(#head)" />
+<polygon points="1063,426 1022,522 1071,433" fill="#001738" />
+<polygon points="1049,397 1062,423 1044,426" fill="#139dff" />
+</svg>

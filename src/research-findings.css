@@ -1,0 +1,63 @@
+.evidence-story > li { position: relative; }
+.evidence-story > li::before {
+  width: 2.35rem;
+  height: 2px;
+  margin-bottom: .15rem;
+  background: #897961;
+  content: "";
+}
+
+.evidence-story .evidence-explanation {
+  align-self: stretch;
+  margin-top: .55rem;
+  color: #313d51;
+}
+
+.evidence-story .evidence-explanation p { color: inherit; font-size: .94rem; }
+.evidence-illustration {
+  display: flex;
+  align-items: center;
+  gap: .25rem;
+  min-height: 1.35rem;
+  margin-bottom: .32rem;
+  color: #304863;
+  font-size: .8rem;
+  font-weight: 650;
+}
+
+.evidence-illustration-0 > span {
+  width: 1.35rem;
+  height: .36rem;
+  border-radius: .12rem;
+  background: #4a6c90;
+}
+
+.evidence-illustration-0 > span + span { border: 1px dashed #4a6c90; background: transparent; }
+.evidence-illustration-1 { gap: 0; }
+.evidence-illustration-1 > span { width: 64%; height: .42rem; border-radius: .16rem 0 0 .16rem; background: #4a6c90; }
+.evidence-illustration-1 > span + span {
+  width: 36%;
+  border: 1px solid #9c613e;
+  border-radius: 0 .16rem .16rem 0;
+  background: repeating-linear-gradient(120deg, #b97247 0 2px, #f0d4b8 2px 5px);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .evidence-story > li::before { transition: background-color 280ms, width 280ms; }
+  .evidence-story .evidence-value strong { transition: color 280ms; }
+  .evidence-story .evidence-explanation { transition: opacity 280ms, transform 280ms; }
+
+  .evidence-story[data-following='true'] li[data-active='false'] .evidence-value strong { color: #465e78; }
+  .evidence-story[data-following='true'] li[data-active='false']:not(:focus-within) .evidence-explanation {
+    opacity: 0;
+    transform: translateY(.22rem);
+  }
+  .evidence-story li[data-active='true']::before { width: 100%; background: #a44e25; }
+  .evidence-story li[data-active='true'] .evidence-value strong { color: #873b19; }
+}
+
+@media (max-width: 47rem) and (prefers-reduced-motion: no-preference) {
+  .evidence-story[data-following='true'] li[data-active='false']:not(:focus-within) .evidence-explanation {
+    opacity: .72;
+  }
+}
