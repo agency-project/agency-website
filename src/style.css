@@ -191,26 +191,36 @@ a:focus-visible {
   position: absolute;
   z-index: -1;
   inset: -6rem 0 0;
-  overflow: hidden;
+  overflow: visible;
   pointer-events: none;
 }
 
 .hanging-bird {
   position: absolute;
   width: var(--bird-width);
+  transform-origin: 57% calc(-1 * var(--string-drop, 0px));
   padding: 0;
-  cursor: pointer;
+  cursor: grab;
+  touch-action: pan-y;
+  user-select: none;
   pointer-events: auto;
 }
 
-.hanging-bird::before {
+.bird-string {
   position: absolute;
   bottom: 69%;
-  left: 57%;
-  height: 100vh;
-  border-left: 1px dashed #45536c;
+  left: calc(57% - 32px);
+  width: 64px;
+  height: calc(var(--string-drop, 100vh) + 31%);
+  overflow: visible;
   pointer-events: none;
-  content: "";
+}
+.bird-string path {
+  fill: none;
+  stroke: #45536c;
+  stroke-width: 1;
+  stroke-dasharray: 3 4;
+  stroke-linecap: round;
 }
 
 .hanging-bird:is(:hover, :focus-visible) img {
@@ -312,3 +322,6 @@ a:focus-visible {
     right: 7%;
   }
 }
+
+.hanging-bird[data-dragging] { cursor: grabbing; }
+.hanging-bird img { -webkit-user-drag: none; user-select: none; }

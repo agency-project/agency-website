@@ -1,4 +1,4 @@
-import { StrictMode, useEffect } from 'react'
+import { StrictMode, useEffect, useRef } from 'react'
 import { createRoot } from 'react-dom/client'
 import agencyLogo from './agency-logo.png'
 import blueBird from './bird-blue.png'
@@ -21,28 +21,134 @@ function HangingBird({ style, image, label, width, height }: {
   width: number
   height: number
 }) {
-  return (
-    <button type="button" className={'hanging-bird ' + style} aria-label={label} onClick={(event) => {
-      const hangingBird = event.currentTarget
-      const bird = hangingBird.firstElementChild
-      if (!bird) return
+  const element = useRef<HTMLButtonElement>(null)
+  const drag = useRef<{ id: number; x: number; angle: number; moved: boolean } | null>(null)
+  const suppressClick = useRef(false)
+  const string = useRef<SVGPathElement>(null)
+  const motion = useRef({ angle: 0, velocity: 0, frame: 0, time: 0 })
 
-      hangingBird.getAnimations({ subtree: true }).forEach(animation => animation.cancel())
-      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-        bird.animate([{ opacity: 1 }, { opacity: 0.55 }, { opacity: 1 }], { duration: 300 })
+  useEffect(() => {
+    const bird = element.current
+    if (!bird) return
+    const state = motion.current
+    const reset = () => {
+      drag.current = null
+      delete bird.dataset.dragging
+      cancelAnimationFrame(state.frame)
+      Object.assign(state, { angle: 0, velocity: 0, frame: 0, time: 0 })
+      bird.style.transform = ''
+      bird.style.setProperty('--string-drop', bird.offsetTop + 'px')
+      string.current?.setAttribute('d', 'M32 0 C32 33 32 70 32 100')
+    }
+    const observer = new ResizeObserver(reset)
+    observer.observe(bird)
+    if (bird.offsetParent) observer.observe(bird.offsetParent)
+    const preference = window.matchMedia('(prefers-reduced-motion: reduce)')
+    preference.addEventListener('change', reset)
+    reset()
+    return () => {
+      drag.current = null
+      delete bird.dataset.dragging
+      cancelAnimationFrame(state.frame)
+      observer.disconnect()
+      preference.removeEventListener('change', reset)
+    }
+  }, [])
+
+  const nudge = (kick = true) => {
+    const bird = element.current
+    if (!bird || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+    const state = motion.current
+    const length = Math.max(bird.offsetTop + bird.offsetHeight * .31, 60)
+    const impulse = Math.min(18, 1800 / length)
+    if (kick) state.velocity = Math.max(-24, Math.min(24, state.velocity - impulse))
+    if (state.frame) return
+    state.time = performance.now()
+    const step = (now: number) => {
+      const elapsed = Math.min((now - state.time) / 1000, .032)
+      state.time = now
+      const stiffness = Math.max(14, Math.min(32, 6000 / length))
+      state.velocity += (-stiffness * state.angle - 3.8 * state.velocity) * elapsed
+      state.angle += state.velocity * elapsed
+      bird.style.transform = 'rotate(' + state.angle + 'deg)'
+      const bend = Math.max(-8, Math.min(8, state.velocity * .45 - state.angle * .3))
+      string.current?.setAttribute('d',
+        'M32 0 C' + (32 + bend) + ' 33 ' + (32 - bend * .4) + ' 70 32 100')
+      if (Math.abs(state.angle) < .015 && Math.abs(state.velocity) < .04) {
+        bird.style.transform = ''
+        string.current?.setAttribute('d', 'M32 0 C32 33 32 70 32 100')
+        Object.assign(state, { angle: 0, velocity: 0, frame: 0 })
         return
       }
+      state.frame = requestAnimationFrame(step)
+    }
+    state.frame = requestAnimationFrame(step)
+  }
 
-      const drop = hangingBird.offsetTop
-      const angle = Math.min(9, Math.atan2(24, Math.max(drop, 1)) * 180 / Math.PI)
-      const pivot = '57% ' + -drop + 'px'
-      const frames = [0, -1, 0.67, -0.33, 0.14, 0].map(swing => ({
-        transform: 'rotate(' + swing * angle + 'deg)',
-        transformOrigin: pivot,
-      }))
-      hangingBird.animate(frames, { duration: 1050, easing: 'ease-out' })
-    }}>
-      <img className={image === blueBird ? 'bird-blue' : 'bird-navy'} src={image} alt="" width={width} height={height} />
+  return (
+    <button ref={element} type="button" className={'hanging-bird ' + style} aria-label={label}
+      onDragStart={event => event.preventDefault()}
+      onPointerDown={event => {
+        if (event.button !== 0 || drag.current) return
+        const bird = event.currentTarget
+        const state = motion.current
+        cancelAnimationFrame(state.frame)
+        state.frame = 0
+        state.velocity = 0
+        suppressClick.current = false
+        drag.current = { id: event.pointerId, x: event.clientX, angle: state.angle, moved: false }
+        bird.dataset.dragging = 'true'
+        bird.setPointerCapture(event.pointerId)
+      }}
+      onPointerMove={event => {
+        const active = drag.current
+        if (!active || active.id !== event.pointerId) return
+        const bird = event.currentTarget
+        const distance = event.clientX - active.x
+        active.moved ||= Math.abs(distance) > 4
+        const length = Math.max(bird.offsetTop + bird.offsetHeight * .31, 60)
+        // Keep the bird's upper corners below its string's anchor.
+        const maxAngle = Math.max(0, Math.min(85,
+          Math.atan2(Math.max(0, bird.offsetTop - 8), bird.offsetWidth * .57) * 180 / Math.PI))
+        const angle = Math.max(-maxAngle, Math.min(maxAngle,
+          active.angle - distance / length * 180 / Math.PI))
+        motion.current.angle = angle
+        bird.style.transform = 'rotate(' + angle + 'deg)'
+        const bend = Math.max(-10, Math.min(10, -angle * .35))
+        string.current?.setAttribute('d',
+          'M32 0 C' + (32 + bend) + ' 33 ' + (32 - bend * .4) + ' 70 32 100')
+      }}
+      onLostPointerCapture={event => {
+        if (!drag.current || drag.current.id !== event.pointerId) return
+        suppressClick.current = drag.current.moved
+        drag.current = null
+        delete event.currentTarget.dataset.dragging
+        if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+          motion.current.angle = 0
+          event.currentTarget.style.transform = ''
+          string.current?.setAttribute('d', 'M32 0 C32 33 32 70 32 100')
+        } else {
+          nudge(false)
+        }
+      }}
+      onPointerUp={event => {
+        if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+          event.currentTarget.releasePointerCapture(event.pointerId)
+        }
+      }}
+      onPointerCancel={event => {
+        if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+          event.currentTarget.releasePointerCapture(event.pointerId)
+        }
+      }}
+      onClick={event => {
+        if (event.detail === 0 || !suppressClick.current) nudge()
+        suppressClick.current = false
+      }}>
+      <svg className="bird-string" viewBox="0 0 64 100" preserveAspectRatio="none" aria-hidden="true">
+        <path ref={string} d="M32 0 C32 33 32 70 32 100" vectorEffect="non-scaling-stroke" />
+      </svg>
+      <img draggable={false} className={image === blueBird ? 'bird-blue' : 'bird-navy'} src={image} alt="" width={width} height={height} />
     </button>
   )
 }
